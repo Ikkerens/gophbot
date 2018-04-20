@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// The bots main logging utility
+// Log is the bots main logging utility
 var Log *zap.Logger
 
 func setupLog() {
