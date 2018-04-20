@@ -8,9 +8,11 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// Self is the bot user itself
 var Self *discordgo.User
 var sessions []*discordgo.Session
 
+// Snowflake is a convenience typealias depicting the format used to store snowflakes
 type Snowflake = string
 
 func ensureShardsSetup() {

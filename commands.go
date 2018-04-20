@@ -9,6 +9,7 @@ import (
 
 var commands = make(map[string]CommandHandler)
 
+// CommandHandler describes what a command handler function should look like
 type CommandHandler = func(session *discordgo.Session, event *discordgo.MessageCreate, args []string)
 
 func init() {
