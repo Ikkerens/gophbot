@@ -32,7 +32,7 @@ func TestCommandParser(t *testing.T) {
 	})
 
 	handleCommand(nil, &discordgo.MessageCreate{
-		&discordgo.Message{
+		Message: &discordgo.Message{
 			Author:  &discordgo.User{ID: "user"},
 			Content: "/parsetest a b c d",
 		},
