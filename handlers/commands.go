@@ -1,10 +1,11 @@
-package gophbot
+package handlers
 
 import (
 	"strings"
 	"unicode/utf8"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ikkerens/gophbot"
 )
 
 var commands = make(map[string]CommandHandler)
@@ -13,7 +14,7 @@ var commands = make(map[string]CommandHandler)
 type CommandHandler = func(session *discordgo.Session, event *discordgo.MessageCreate, args []string)
 
 func init() {
-	AddHandler(handleCommand)
+	gophbot.AddHandler(handleCommand)
 }
 
 // AddCommand registers a new command for the command handler
@@ -22,7 +23,7 @@ func AddCommand(command string, handler CommandHandler) {
 }
 
 func handleCommand(session *discordgo.Session, event *discordgo.MessageCreate) {
-	if event.Author.ID == Self.ID {
+	if event.Author.ID == gophbot.Self.ID {
 		return
 	}
 

@@ -1,14 +1,15 @@
-package gophbot
+package handlers
 
 import (
 	"os"
 	"testing"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ikkerens/gophbot"
 )
 
 func TestMain(m *testing.M) {
-	Self = &discordgo.User{}
+	gophbot.Self = &discordgo.User{}
 	os.Exit(m.Run())
 }
 

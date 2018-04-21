@@ -2,6 +2,7 @@ package gophbot
 
 import (
 	"os"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"go.uber.org/zap"
@@ -23,11 +24,17 @@ func setupLog() {
 		stdOut = zapcore.Lock(os.Stdout)
 		stdErr = zapcore.Lock(os.Stderr)
 
-		console = zapcore.NewConsoleEncoder(zap.NewProductionEncoderConfig())
+		config  = zap.NewProductionEncoderConfig()
+		console = zapcore.NewConsoleEncoder(config)
 	)
+	config.EncodeTime = encodeTime
 
 	Log = zap.New(zapcore.NewTee(
 		zapcore.NewCore(console, stdOut, outFilter),
 		zapcore.NewCore(console, stdErr, errFilter),
 	))
+}
+
+func encodeTime(t time.Time, e zapcore.PrimitiveArrayEncoder) {
+
 }

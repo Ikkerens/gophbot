@@ -7,11 +7,12 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikkerens/gophbot"
+	commands "github.com/ikkerens/gophbot/handlers"
 	"go.uber.org/zap"
 )
 
 func init() {
-	gophbot.AddCommand("ping", ping)
+	commands.AddCommand("ping", ping)
 }
 
 func ping(session *discordgo.Session, event *discordgo.MessageCreate, _ []string) {
