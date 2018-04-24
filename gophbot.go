@@ -6,38 +6,43 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/jinzhu/gorm"
+	"go.uber.org/zap"
 )
 
-// Self is the bot user itself
-var Self *discordgo.User
-var sessions []*discordgo.Session
+var (
+	DB *gorm.DB
+
+	// Self is the bot user itself
+	Self     *discordgo.User
+	sessions []*discordgo.Session
+)
 
 // Snowflake is a convenience typealias depicting the format used to store snowflakes
 type Snowflake = string
 
 func ensureShardsSetup() {
-	if Self != nil || os.Getenv("TOKEN") == "" {
+	if Self != nil {
 		return
 	}
 
-	setupLog()
 	Log.Info("Setting up shards")
 
 	// Set up the first session so we can request the amount of required shards
 	discord, err := discordgo.New("Bot " + os.Getenv("TOKEN"))
 	if err != nil {
-		panic(err)
+		Log.Panic("Could not create initial discord session", zap.Error(err))
 	}
 
 	Self, err = discord.User("@me")
 	if err != nil {
-		panic(err)
+		Log.Fatal("Could not request bot user information", zap.Error(err))
 	}
 
 	// Request the gateway from Discord, and the shards.
 	gateway, err := discord.GatewayBot()
 	if err != nil {
-		panic(err)
+		Log.Fatal("Could not request bot gateway information", zap.Error(err))
 	}
 
 	// Make a list of all handlers
@@ -49,7 +54,7 @@ func ensureShardsSetup() {
 		if i != 0 {
 			sessions[i], err = discordgo.New("Bot " + os.Getenv("TOKEN"))
 			if err != nil {
-				panic(err)
+				Log.Panic("Could not create shard session", zap.Error(err))
 			}
 		}
 
@@ -61,16 +66,26 @@ func ensureShardsSetup() {
 
 // Start is the main entry point for the bot, outside of the main package to allow external packages to call back
 func Start() {
+	Log.Info("Connecting to database")
+	db, err := setupDB()
+	if err != nil {
+		Log.Fatal("Could not connect to database", zap.Error(err))
+	}
+	defer db.Close()
+	DB = db
+
 	Log.Info("Connecting all shards")
 
 	// Connect all the shards
 	for _, shard := range sessions {
 		if err := shard.Open(); err != nil {
-			panic(err)
+			Log.Fatal("Could not open shard websocket", zap.Error(err))
 		}
 		//noinspection GoDeferInLoop
 		defer shard.Close()
 	}
+
+	go statusLoop()
 
 	Log.Info("Bot is now running. Press Ctrl+C to exit")
 

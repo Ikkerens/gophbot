@@ -16,11 +16,13 @@ go install github.com/ikkerens/gophbot/cmd/gophbot
 Windows:
 ```
 SET TOKEN="PASTEYOURTOKENHERE"
+SET SQL_DSN="dbuser:dbpass@localhost/dbname"
 %GOPATH%\bin\gophbot.exe
 ```
 
 Linux/Mac/Unix:
 ```
 export TOKEN=PASTEYOURTOKENHERE
+export SQL_DSN=dbuser:dbpass@localhost/dbname
 $GOPATH/bin/gophbot
 ```

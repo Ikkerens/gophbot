@@ -23,8 +23,8 @@ func TestCase(t *testing.T) {
 
 func TestCommandParser(t *testing.T) {
 	callback := make(chan bool, 1)
-	AddCommand("parsetest", func(session *discordgo.Session, event *discordgo.MessageCreate, args []string) {
-		if len(args) != 4 {
+	AddCommand("parsetest", func(session *discordgo.Session, cmd *InvokedCommand) {
+		if len(cmd.Args) != 4 {
 			callback <- false
 			return
 		}

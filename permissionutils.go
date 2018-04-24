@@ -1,6 +1,8 @@
 package gophbot
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+)
 
 // ComputeBasePermissions calculates the permissions a guild member has, outside the scope of a channel
 func ComputeBasePermissions(member *discordgo.Member, guild *discordgo.Guild) (int, error) {

@@ -12,7 +12,7 @@ import (
 // Log is the bots main logging utility
 var Log *zap.Logger
 
-func setupLog() {
+func init() {
 	var (
 		outFilter = zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 			return lvl == zapcore.InfoLevel || (sessions[0].LogLevel == discordgo.LogDebug && lvl == zapcore.DebugLevel)
@@ -24,10 +24,10 @@ func setupLog() {
 		stdOut = zapcore.Lock(os.Stdout)
 		stdErr = zapcore.Lock(os.Stderr)
 
-		config  = zap.NewProductionEncoderConfig()
-		console = zapcore.NewConsoleEncoder(config)
+		config = zap.NewProductionEncoderConfig()
 	)
 	config.EncodeTime = encodeTime
+	console := zapcore.NewConsoleEncoder(config)
 
 	Log = zap.New(zapcore.NewTee(
 		zapcore.NewCore(console, stdOut, outFilter),
@@ -36,5 +36,5 @@ func setupLog() {
 }
 
 func encodeTime(t time.Time, e zapcore.PrimitiveArrayEncoder) {
-
+	e.AppendString(t.Format(time.Stamp))
 }

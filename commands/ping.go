@@ -15,7 +15,7 @@ func init() {
 	commands.AddCommand("ping", ping)
 }
 
-func ping(session *discordgo.Session, event *discordgo.MessageCreate, _ []string) {
+func ping(session *discordgo.Session, cmd *commands.InvokedCommand) {
 	var (
 		lock     sync.RWMutex
 		message  *discordgo.Message
@@ -33,12 +33,12 @@ func ping(session *discordgo.Session, event *discordgo.MessageCreate, _ []string
 	})()
 
 	// Prepare the initial message
-	pong := event.Author.Mention() + " Pong!"
+	pong := cmd.User.Mention() + " Pong!"
 
 	// Lock the message variable for writing & send the message
 	lock.Lock()
 	start := time.Now()
-	msg, err := session.ChannelMessageSend(event.ChannelID, pong)
+	msg, err := session.ChannelMessageSend(cmd.Channel.ID, pong)
 	if err != nil {
 		lock.Unlock()
 		gophbot.Log.Error("Could not send ping message.", zap.Error(err))

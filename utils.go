@@ -53,6 +53,21 @@ func GetGuild(guildID Snowflake) (*discordgo.Guild, error) {
 	return guild, nil
 }
 
+func GetChannel(discord *discordgo.Session, channelID Snowflake) (*discordgo.Channel, error) {
+	channel, err := discord.State.Channel(channelID)
+	if err == nil {
+		return channel, nil
+	}
+
+	channel, err = discord.Channel(channelID)
+	if err != nil {
+		return nil, err
+	}
+	discord.State.ChannelAdd(channel)
+
+	return channel, err
+}
+
 // GetGuildMember will attempt to obtain a member instance for this guild member.
 // Will err if this user is not a member of this guild
 func GetGuildMember(guildID, userID Snowflake) (*discordgo.Member, error) {
