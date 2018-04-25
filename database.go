@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/jinzhu/gorm"
+	// This is just a convenience import that imports the mysql driver.
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/wantedly/gorm-zap"
 	"go.uber.org/zap"
@@ -24,6 +25,7 @@ func setupDB() (*gorm.DB, error) {
 	return db, nil
 }
 
+// Guild is the metadata of this guild in the database, for guild-specific settings.
 type Guild struct {
 	ID     Snowflake `gorm:"size:20;primary;not null"`
 	Prefix string    `gorm:"size:10;not null;default:\"!\""`

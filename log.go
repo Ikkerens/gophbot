@@ -15,7 +15,11 @@ var Log *zap.Logger
 func init() {
 	var (
 		outFilter = zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-			return lvl == zapcore.InfoLevel || (sessions[0].LogLevel == discordgo.LogDebug && lvl == zapcore.DebugLevel)
+			if len(sessions) > 0 && sessions[0].LogLevel == discordgo.LogDebug && lvl == zap.DebugLevel {
+				return true
+			}
+
+			return lvl == zapcore.InfoLevel
 		})
 		errFilter = zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 			return lvl > zapcore.InfoLevel

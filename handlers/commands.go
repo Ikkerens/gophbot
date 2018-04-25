@@ -28,58 +28,31 @@ func handleCommand(discord *discordgo.Session, event *discordgo.MessageCreate) {
 		return
 	}
 
-	channel, err := gophbot.GetChannel(discord, event.ChannelID)
+	cmd, err := newInvokedCommand(discord, event)
 	if err != nil {
-		gophbot.Log.Error("Could not fetch channel a command is executed in", zap.Error(err))
+		gophbot.Log.Error("Could not fetch command metadata", zap.Error(err))
 		return
 	}
 
-	if channel.Type != discordgo.ChannelTypeGuildText {
+	if cmd.Channel.Type != discordgo.ChannelTypeGuildText {
 		discord.ChannelMessageSend(event.ChannelID, "I'm sorry, but I only listen commands inside servers.")
 		return
 	}
 
-	guild, err := gophbot.GetGuild(channel.GuildID)
-	if err != nil {
-		gophbot.Log.Error("Could not fetch guild a command is executed in", zap.Error(err))
-		return
-	}
-
-	member, err := gophbot.GetGuildMember(guild.ID, event.Author.ID)
-	if err != nil {
-		gophbot.Log.Error("Could not get membership definition for the user that invoked a command", zap.Error(err))
-		return
-	}
-
-	dbGuild := &gophbot.Guild{ID: guild.ID}
-	if err = gophbot.DB.Where(dbGuild).Find(dbGuild).Error; err != nil {
-		gophbot.Log.Error("Could not get guild information from database", zap.Error(err))
-		return
-	}
-
-	if !strings.HasPrefix(event.Content, dbGuild.Prefix) {
+	if !strings.HasPrefix(event.Content, cmd.DBGuild.Prefix) {
 		return
 	}
 
 	args := strings.Split(event.Content, " ")
-	if utf8.RuneCountInString(args[0]) <= len(dbGuild.Prefix) {
+	if utf8.RuneCountInString(args[0]) <= len(cmd.DBGuild.Prefix) {
 		return
 	}
 
-	commandStr := strings.ToLower(args[0][len(dbGuild.Prefix):])
+	commandStr := strings.ToLower(args[0][len(cmd.DBGuild.Prefix):])
+	cmd.Args = args[1:]
 	command, exists := commands[commandStr]
 	if exists {
-		command(discord, &InvokedCommand{
-			Session: discord,
-			Guild:   guild,
-			Channel: channel,
-			User:    event.Author,
-			Member:  member,
-
-			DBGuild: dbGuild,
-
-			Args: args[1:],
-		})
+		command(discord, cmd)
 	}
 }
 
@@ -96,6 +69,39 @@ type InvokedCommand struct {
 	Args []string
 }
 
+func newInvokedCommand(discord *discordgo.Session, event *discordgo.MessageCreate) (*InvokedCommand, error) {
+	channel, err := gophbot.GetChannel(discord, event.ChannelID)
+	if err != nil {
+		return nil, err
+	}
+
+	guild, err := gophbot.GetGuild(channel.GuildID)
+	if err != nil {
+		return nil, err
+	}
+
+	member, err := gophbot.GetGuildMember(guild.ID, event.Author.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	dbGuild := &gophbot.Guild{ID: guild.ID}
+	if err = gophbot.DB.Where(dbGuild).Find(dbGuild).Error; err != nil {
+		return nil, err
+	}
+
+	return &InvokedCommand{
+		Session: discord,
+		Guild:   guild,
+		Channel: channel,
+		User:    event.Author,
+		Member:  member,
+
+		DBGuild: dbGuild,
+	}, nil
+}
+
+// HasPermission is a convenience command that allows for quick & simple permission checking.
 func (c *InvokedCommand) HasPermission(permission int) bool {
 	base, err := gophbot.ComputeBasePermissions(c.Member, c.Guild)
 	if err != nil {
@@ -112,6 +118,7 @@ func (c *InvokedCommand) HasPermission(permission int) bool {
 	return (p & permission) == permission
 }
 
+// Reply is a convenience method that allows for quick replies to a command.
 func (c *InvokedCommand) Reply(reply string) (msg *discordgo.Message, err error) {
 	msg, err = c.Session.ChannelMessageSend(c.Channel.ID, c.User.Mention()+" "+reply)
 	return

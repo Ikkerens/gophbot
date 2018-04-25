@@ -53,6 +53,8 @@ func GetGuild(guildID Snowflake) (*discordgo.Guild, error) {
 	return guild, nil
 }
 
+// GetChannel attempts to get a channel instance from the shard state cache, and if none exists, attempts to obtain it
+// from the Discord API. Will err if the channel does not exist or the bot is not in the guild it belongs to.
 func GetChannel(discord *discordgo.Session, channelID Snowflake) (*discordgo.Channel, error) {
 	channel, err := discord.State.Channel(channelID)
 	if err == nil {

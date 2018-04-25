@@ -1,6 +1,7 @@
 package gophbot
 
 import (
+	"flag"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +12,7 @@ import (
 )
 
 var (
+	// DB is the database connection pool that we use for obtaining guild/channel-specific settings.
 	DB *gorm.DB
 
 	// Self is the bot user itself
@@ -22,7 +24,8 @@ var (
 type Snowflake = string
 
 func ensureShardsSetup() {
-	if Self != nil {
+	// Don't run this in test mode
+	if flag.Lookup("test.v") != nil {
 		return
 	}
 
