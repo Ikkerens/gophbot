@@ -25,7 +25,7 @@ type Snowflake = string
 
 func ensureShardsSetup() {
 	// Don't run this in test mode
-	if flag.Lookup("test.v") != nil {
+	if Self != nil || flag.Lookup("test.v") != nil {
 		return
 	}
 
