@@ -61,6 +61,7 @@ type InvokedCommand struct {
 	Session *discordgo.Session
 	Guild   *discordgo.Guild
 	Channel *discordgo.Channel
+	Message *discordgo.Message
 	Member  *discordgo.Member
 	User    *discordgo.User
 
@@ -94,6 +95,7 @@ func newInvokedCommand(discord *discordgo.Session, event *discordgo.MessageCreat
 		Session: discord,
 		Guild:   guild,
 		Channel: channel,
+		Message: event.Message,
 		User:    event.Author,
 		Member:  member,
 
