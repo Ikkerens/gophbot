@@ -20,9 +20,6 @@ var (
 	sessions []*discordgo.Session
 )
 
-// Snowflake is a convenience typealias depicting the format used to store snowflakes
-type Snowflake = string
-
 func ensureShardsSetup() {
 	// Don't run this in test mode
 	if Self != nil || flag.Lookup("test.v") != nil {

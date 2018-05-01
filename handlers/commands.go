@@ -28,6 +28,7 @@ func handleCommand(discord *discordgo.Session, event *discordgo.MessageCreate) {
 		return
 	}
 
+	gophbot.Log.Info("<# " + event.ChannelID + "> - " + event.Author.Username + ": " + event.Content)
 	cmd, err := newInvokedCommand(discord, event)
 	if err != nil {
 		gophbot.Log.Error("Could not fetch command metadata", zap.Error(err))

@@ -3,8 +3,10 @@ package commands
 import (
 	"flag"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikkerens/gophbot"
@@ -56,7 +58,7 @@ func purge(discord *discordgo.Session, cmd *commands.InvokedCommand) {
 	}
 
 	// Get the active channel instance, verifying it exists in the process
-	var channel *discordgo.Channel
+	channel := cmd.Channel
 	if *channelID != "" {
 		channel, err = gophbot.GetChannel(discord, strings.Trim(*channelID, "<#>"))
 		if err != nil {
@@ -71,15 +73,27 @@ func purge(discord *discordgo.Session, cmd *commands.InvokedCommand) {
 		}
 	}
 
+	if count > 100 {
+		if err := discord.MessageReactionAdd(cmd.Channel.ID, cmd.Message.ID, gophbot.LoadingReaction); err != nil {
+			gophbot.Log.Error("Could not send progress reaction", zap.Error(err))
+		}
+	}
+
+	success := false
+	defer sendPurgeFailed(&success, cmd)
+
 	// Build a list of all messages
 	before := cmd.Message.ID
-	messageIDs := make([]gophbot.Snowflake, 0, count)
+	oldMessageIDs := make([]gophbot.Snowflake, 0, count)
+	newMessageIDs := make([]gophbot.Snowflake, 0, count)
 	for count > 0 {
-		messages, err := discord.ChannelMessages(channel.ID, int(math.Min(100, float64(count))), before, "", "")
+		messages, err := discord.ChannelMessages(channel.ID, 100, before, "", "")
 		if err != nil {
 			gophbot.Log.Error("Could not request discord channel messages", zap.Error(err))
 			return
 		}
+
+		before = messages[0].ID
 
 		for _, message := range messages {
 			if *bots && !message.Author.Bot {
@@ -90,19 +104,60 @@ func purge(discord *discordgo.Session, cmd *commands.InvokedCommand) {
 				continue
 			}
 
-			if authorID == "" || authorID == message.Author.ID {
+			if authorID != "" && authorID != message.Author.ID {
 				continue
 			}
 
-			messageIDs = append(messageIDs, message.ID)
+			t, err := message.Timestamp.Parse()
+			if err != nil {
+				gophbot.Log.Error("Discord provided an unparseable date", zap.Error(err))
+				return
+			}
+
+			if time.Since(t) > (2 * 7 * 24 * time.Hour) {
+				oldMessageIDs = append(oldMessageIDs, message.ID)
+			} else {
+				newMessageIDs = append(newMessageIDs, message.ID)
+			}
 			count--
-			before = messageIDs[len(messageIDs)-1]
+
+			if count == 0 {
+				break
+			}
 		}
 	}
 
-	for _, id := range messageIDs {
-		gophbot.Log.Info("Deleting", zap.String("msg", id))
+	sort.Sort(sort.Reverse(sort.StringSlice(newMessageIDs)))
+	sort.Sort(sort.Reverse(sort.StringSlice(oldMessageIDs)))
+
+	for i := 0; i < len(newMessageIDs); i += 100 {
+		c := int(math.Min(float64(len(newMessageIDs)), 100))
+		if err = discord.ChannelMessagesBulkDelete(channel.ID, newMessageIDs[i:i+c]); err != nil {
+			gophbot.Log.Error("Could not bulk purge messages", zap.Error(err))
+			return
+		}
 	}
-	cmd.Reply("Puuuuurge!")
-	// TODO delete messages
+	for _, id := range oldMessageIDs {
+		if err = discord.ChannelMessageDelete(channel.ID, id); err != nil {
+			gophbot.Log.Error("Could not purge messages", zap.Error(err))
+			return
+		}
+	}
+
+	discord.ChannelMessageDelete(cmd.Channel.ID, cmd.Message.ID)
+	success = true
+
+	message, err := cmd.Reply(gophbot.OkHand)
+	if err == nil {
+		time.Sleep(2 * time.Second)
+		discord.ChannelMessageDelete(message.ChannelID, message.ID)
+	}
+}
+
+func sendPurgeFailed(success *bool, cmd *commands.InvokedCommand) {
+	if !*success {
+		// We don't care about errors here, it's only a status report, which would be nice if it works
+		cmd.Session.MessageReactionRemove(cmd.Channel.ID, cmd.Message.ID, gophbot.LoadingReaction, gophbot.Self.ID)
+		cmd.Session.MessageReactionAdd(cmd.Channel.ID, cmd.Message.ID, gophbot.Error)
+	}
 }
