@@ -93,9 +93,11 @@ func purge(discord *discordgo.Session, cmd *commands.InvokedCommand) {
 			return
 		}
 
-		before = messages[0].ID
+		//before = messages[0].ID
 
 		for _, message := range messages {
+			before = message.ID
+
 			if *bots && !message.Author.Bot {
 				continue
 			}
@@ -124,6 +126,10 @@ func purge(discord *discordgo.Session, cmd *commands.InvokedCommand) {
 			if count == 0 {
 				break
 			}
+		}
+
+		if len(messages) != 100 {
+			break // end of channel
 		}
 	}
 
