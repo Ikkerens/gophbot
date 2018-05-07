@@ -2,6 +2,7 @@ package commands
 
 import (
 	"flag"
+	"io/ioutil"
 	"math"
 	"sort"
 	"strconv"
@@ -28,6 +29,7 @@ func purge(discord *discordgo.Session, cmd *commands.InvokedCommand) {
 
 	// This command has several flags that modify behaviour
 	flags := flag.NewFlagSet("purgefs", flag.ContinueOnError)
+	flags.SetOutput(ioutil.Discard)
 	bots := flags.Bool("bots", false, "Setting this will cause this command to only delete bot messages")
 	images := flags.Bool("images", false, "Setting this will delete only messages containing an image")
 	author := flags.String("author", "", "Setting this will only delete messages by the specified author")

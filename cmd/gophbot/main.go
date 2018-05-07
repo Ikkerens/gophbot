@@ -16,5 +16,5 @@ func main() {
 		gophbot.Log.Fatal("Environment variable SQL_DSN, which is required, is not set.")
 	}
 
-	defer gophbot.Start()
+	gophbot.Start()
 }

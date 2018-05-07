@@ -9,14 +9,14 @@ import (
 	"go.uber.org/zap"
 )
 
-var commands = make(map[string]CommandHandler)
+func init() {
+	gophbot.AddHandler(handleCommand)
+}
 
 // CommandHandler describes what a command handler function should look like
 type CommandHandler = func(discord *discordgo.Session, cmd *InvokedCommand)
 
-func init() {
-	gophbot.AddHandler(handleCommand)
-}
+var commands = make(map[string]CommandHandler)
 
 // AddCommand registers a new command for the command handler
 func AddCommand(command string, handler CommandHandler) {
