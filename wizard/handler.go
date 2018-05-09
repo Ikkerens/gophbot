@@ -19,7 +19,7 @@ type Session struct {
 	channel   gophbot.Snowflake
 
 	/* Runtime */
-	mutex                sync.Mutex
+	mutex                sync.RWMutex
 	closeReactionHandler func()
 	reactions            chan *discordgo.MessageReactionAdd
 }
@@ -39,6 +39,8 @@ func New(discord *discordgo.Session, channel, user gophbot.Snowflake, page Page)
 		}
 	)
 
+	discord.ChannelTyping(channel)
+
 	session.mutex.Lock()
 	session.closeReactionHandler = discord.AddHandler(session.handleReaction)
 
@@ -57,12 +59,12 @@ func (s *Session) handleReaction(discord *discordgo.Session, event *discordgo.Me
 		return
 	}
 
-	s.mutex.Lock()
+	s.mutex.RLock()
 	if s.container == nil || event.MessageID != s.container.ID {
-		s.mutex.Unlock()
+		s.mutex.RUnlock()
 		return
 	}
-	s.mutex.Unlock()
+	s.mutex.RUnlock()
 
 	discord.MessageReactionRemove(event.ChannelID, event.MessageID, event.Emoji.APIName(), event.UserID)
 

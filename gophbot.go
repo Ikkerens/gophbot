@@ -61,7 +61,6 @@ func ensureShardsSetup() {
 			}
 		}
 
-		// sessions[i].LogLevel = discordgo.LogDebug
 		sessions[i].ShardID = i
 		sessions[i].ShardCount = gateway.Shards
 	}
