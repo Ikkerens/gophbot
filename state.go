@@ -2,6 +2,7 @@ package gophbot
 
 import (
 	"os"
+	"sync"
 
 	"github.com/jinzhu/gorm"
 	// This is just a convenience import that imports the mysql driver.
@@ -23,6 +24,14 @@ func setupDB() (*gorm.DB, error) {
 	}
 
 	return db, nil
+}
+
+// State keeps commonly use settings for the bot in memory for quick access
+var State = struct {
+	sync.RWMutex
+	Guilds map[string]*Guild
+}{
+	Guilds: make(map[string]*Guild),
 }
 
 // Guild is the metadata of this guild in the database, for guild-specific settings.

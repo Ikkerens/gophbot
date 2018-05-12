@@ -18,6 +18,10 @@ func newGuild(_ *discordgo.Session, event *discordgo.GuildCreate) {
 	if err := gophbot.DB.FirstOrCreate(g, g).Error; err != nil {
 		gophbot.Log.Error("Could not create guild definition in database", zap.Error(err))
 	}
+
+	gophbot.State.Lock()
+	gophbot.State.Guilds[event.ID] = g
+	gophbot.State.Unlock()
 }
 
 func removeGuild(_ *discordgo.Session, event *discordgo.GuildDelete) {
@@ -26,4 +30,8 @@ func removeGuild(_ *discordgo.Session, event *discordgo.GuildDelete) {
 	if err := gophbot.DB.Delete(gophbot.Guild{}, "id LIKE ?", event.ID).Error; err != nil {
 		gophbot.Log.Error("Could not delete guild definition from database", zap.Error(err))
 	}
+
+	gophbot.State.Lock()
+	delete(gophbot.State.Guilds, event.ID)
+	gophbot.State.Unlock()
 }

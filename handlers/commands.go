@@ -6,6 +6,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikkerens/gophbot"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -86,9 +87,11 @@ func newInvokedCommand(discord *discordgo.Session, event *discordgo.MessageCreat
 		return nil, err
 	}
 
-	dbGuild := &gophbot.Guild{ID: guild.ID}
-	if err = gophbot.DB.Where(dbGuild).Find(dbGuild).Error; err != nil {
-		return nil, err
+	gophbot.State.RLock()
+	dbGuild, ok := gophbot.State.Guilds[guild.ID]
+	gophbot.State.RUnlock()
+	if !ok {
+		return nil, errors.New("guild not loaded")
 	}
 
 	return &InvokedCommand{
